@@ -13,8 +13,12 @@ def format(inputpath, outputpath):
             outputline = project + line
             # print(outputline)
             outputfile.write(outputline)
-        else:
+        elif line == '' or line == '\n':
+            # Do nothing
             continue
+        else:
+            # Write line as is.
+            outputfile.write(line)
 
     inputfile.close()
     outputfile.close()
