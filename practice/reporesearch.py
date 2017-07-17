@@ -1,11 +1,92 @@
 #! /usr/bin/env python3
 
-import datetime, sys, os, re
+import datetime, sys, os, re, subprocess, io
+
 
 def main(args):
-    print(parseargs(args))
+    if args[0] == 'cc':
+        branch, since, until, interval = parseArgsForCC(args[1:])
+        executeCountingCommit(branch, since, until, interval)
+    elif args[0] == 'interactive':
+        startInteractiveMode()
 
-def parseargs(args):
+
+def startInteractiveMode():
+    print('''\
+    What do you do ?
+      1. Count Number of Commit
+      2. Research a specific project
+      
+      9. Exit
+    ''')
+    number = input('''\
+    Select No.: ''')
+    if number == '1':
+        startCountingCommit()
+    elif number == '2':
+        startResearchSpecificProject()
+    elif number == '9':
+        sys.exit()
+
+
+def startCountingCommit():
+    print('''\
+    What do you want to count ?
+      1. Total Commits of All Projects
+      2. Commits of Each Project
+    ''')
+    countingMode = input('''\
+    Select No.: ''')
+    branch = input('''\
+    Branch: ''')
+    since = input('''\
+    Since: ''')
+    until = input('''\
+    Until: ''')
+    interval = input('''\
+    Interval: ''')
+
+
+def startResearchSpecificProject():
+    pass
+
+
+def executeCountingCommit(branch, since, until, interval):
+    repo_cmd = ["repo", "forall", "-p", "-c"]
+    since_opt = "--since=\'%s 00:00:00\' " % since.strftime('%Y-%m-%d')
+    until_opt = "--until=\'%s 23:59:59\'" % until.strftime('%Y-%m-%d')
+    repo_forall_cmd = "git log " +  branch + \
+                      " --oneline --date=iso --pretty=',%h,%cd,%a,%s' " + \
+                      since_opt + until_opt
+    repo_cmd.append("\"%s\"" % repo_forall_cmd)
+    print(repo_cmd)
+    # exe = subprocess.run(repo_cmd, stdout=subprocess.PIPE)
+    test_cmd = ["cat", "input.txt"]
+    exe = subprocess.Popen(test_cmd, stdout=subprocess.PIPE)
+    project = None
+    # f = io.BytesIO(exe.stdout)
+    #sys.stdout.buffer.write(exe.stdout)
+    # subprocess.check_output()
+    #print(exe.stdout.decode('utf-8'))
+    print('1')
+    #print(exe.stdout.decode('utf-8'))
+    print('2')
+    # for line in iter(exe.stdout, "\n"):
+    for line in exe.stdout:
+        linestr = str(line)
+        print(linestr, end='')
+        if linestr.startswith('project '):
+            project = linestr[len('project '):-1]
+        elif linestr.startswith(','):
+            outputline = project + linestr
+            print(outputline)
+            #outputfile.write(outputline)
+        else:
+            continue
+
+
+
+def parseArgsForCC(args):
     opt = None
     branch = None
     since = None
@@ -24,7 +105,7 @@ def parseargs(args):
         if opt == 'b' or opt == 'branch':
             branch = arg
         elif opt == 's' or opt == 'since' or opt == 'start':
-            start = datetime.datetime.strptime(arg, '%Y%m%d')
+            since = datetime.datetime.strptime(arg, '%Y%m%d')
             opt = None
         elif opt == 'u' or opt =='until' or opt == 'end':
             until = datetime.datetime.strptime(arg, '%Y%m%d')
@@ -43,7 +124,7 @@ def parseargs(args):
     if opt != None:
         print("Error: Invalid argument")
         sys.exit(1)
-    return branch, start, until, interval
+    return branch, since, until, interval
 
 
 if __name__ == '__main__':
