@@ -61,29 +61,24 @@ def executeCountingCommit(branch, since, until, interval):
     repo_cmd.append("\"%s\"" % repo_forall_cmd)
     print(repo_cmd)
     # exe = subprocess.run(repo_cmd, stdout=subprocess.PIPE)
-    test_cmd = ["cat", "input.txt"]
-    exe = subprocess.Popen(test_cmd, stdout=subprocess.PIPE)
+    test_cmd = ["cat", "input2.txt"]
+    exe = subprocess.Popen(test_cmd, stdout=subprocess.PIPE, encoding='utf-8')
     project = None
-    # f = io.BytesIO(exe.stdout)
-    #sys.stdout.buffer.write(exe.stdout)
-    # subprocess.check_output()
-    #print(exe.stdout.decode('utf-8'))
-    print('1')
-    #print(exe.stdout.decode('utf-8'))
-    print('2')
-    # for line in iter(exe.stdout, "\n"):
     for line in exe.stdout:
-        linestr = str(line)
-        print(linestr, end='')
-        if linestr.startswith('project '):
-            project = linestr[len('project '):-1]
-        elif linestr.startswith(','):
-            outputline = project + linestr
-            print(outputline)
+        #linestr = str(line)
+        print('org: ' + line, end='')
+        if line.startswith('project '):
+            project = line[len('project '):-1]
+        elif line.startswith(','):
+            outputline = project + line
+            print('mod: ' + outputline, end='')
             #outputfile.write(outputline)
-        else:
+        elif line == '' or line == '\n':
+            # Do nothing
             continue
-
+        else:
+            print('mod: ' + line, end='')
+            #outputfile.write(outputline)
 
 
 def parseArgsForCC(args):
