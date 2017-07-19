@@ -52,13 +52,35 @@ def startResearchSpecificProject():
 
 
 def executeCountingCommit(branch, since, until, interval):
+    # Create repo command
     repo_cmd = ["repo", "forall", "-p", "-c"]
-    since_opt = "--since=\'%s 00:00:00\' " % since.strftime('%Y-%m-%d')
-    until_opt = "--until=\'%s 23:59:59\'" % until.strftime('%Y-%m-%d')
-    repo_forall_cmd = "git log " +  branch + \
-                      " --oneline --date=iso --pretty=',%h,%cd,%a,%s' " + \
-                      since_opt + until_opt
+    # since_opt = "--since=\'%s 00:00:00\' " % since.strftime('%Y-%m-%d')
+    # until_opt = "--until=\'%s 23:59:59\'" % until.strftime('%Y-%m-%d')
+    # repo_forall_cmd = "git log " +  branch + \
+    #                   " --oneline --date=iso --pretty=',%h,%cd,%a,%s' " + \
+    #                   since_opt + until_opt
+    repo_forall_cmd = "git_cc " + branch + \
+                      " " + since.strftime('%Y%m%d') + \
+                      " " + until.strftime('%Y%m%d') + \
+                      " " + interval
     repo_cmd.append("\"%s\"" % repo_forall_cmd)
+
+    # Parse interval
+    regex = re.compile(r'(\d+)(m|w|d)')
+    mo = regex.search(arg)
+    if mo.group(1) == None or mo.group(2) == None:
+        print("Error: Invalid argumnet")
+        sys.exit(1)
+    interval = {'value': mo.group(1), 'unit': mo.group(2)}
+
+    delta = None
+    if interval['unit'] == 'm':
+        delta = datetime.timedelta(months=interval['value'])
+    elif interval['unit'] == 'w':
+        delta = datetime.timedelta(weeks=interval['value'])
+    elif interval['unit'] == 'd':
+        delta = datetime.timedelta(days=interval['value'])
+
     print(repo_cmd)
     # exe = subprocess.run(repo_cmd, stdout=subprocess.PIPE)
     test_cmd = ["cat", "input2.txt"]
@@ -106,12 +128,7 @@ def parseArgsForCC(args):
             until = datetime.datetime.strptime(arg, '%Y%m%d')
             opt = None
         elif opt == 'i' or opt == 'interval':
-            regex = re.compile(r'(\d+)(m|w|d)')
-            mo = regex.search(arg)
-            if mo.group(1) == None or mo.group(2) == None:
-                print("Error: Invalid argumnet")
-                sys.exit(1)
-            interval = {'value': mo.group(1), 'unit': mo.group(2)}
+            interval = arg
             opt = None
         else:
             print("Error: Invalid argument")
