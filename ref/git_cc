@@ -1,0 +1,38 @@
+#!/bin/bash
+
+BRANCH=$1
+START=$2
+END=$3
+INTERVAL=$4
+
+INTERVAL_NUM=`echo ${INTERVAL} | sed "s/[m|w|d]//g"`
+INTERVAL_UNIT_SIM=`echo ${INTERVAL} | sed "s/[0-9]*//g"`
+INTERVAL_UNIT="days"
+
+if [ ${INTERVAL_UNIT_SIM} == 'm' ]; then
+    INTERVAL_UNIT="months"
+elif [ ${INTERVAL_UNIT_SIM} == 'w' ]; then
+    INTERVAL_UNIT="weeks"
+fi
+
+SINCE=`date -d "${START}" +%Y-%m-%d`
+START=`date -d "${START} ${INTERVAL_NUM} ${INTERVAL_UNIT}" +%Y%m%d`
+SUM=0
+
+for (( DATE=${START} ; ${DATE} <= ${END}; DATE=`date -d "${DATE} ${INTERVAL_NUM} ${INTERVAL_UNIT}" +%Y%m%d` )) ; do
+    UNTIL=`date -d "${DATE} -1 day" +%Y-%m-%d`
+    COMMIT_COUNT=`git log ${BRANCH} --oneline --no-merges --pretty='%h %cd %d %s' --since="${SINCE} 00:00:00" --until="${UNTIL} 23:59:59" |wc -l`
+    SUM=`expr ${SUM} + ${COMMIT_COUNT}`
+#    echo "${SINCE},${UNTIL},${COMMIT_COUNT}"
+    echo -n ",${COMMIT_COUNT}"
+    SINCE=`date -d "${DATE}" +%Y-%m-%d`
+done
+
+if [ ${DATE} > ${END} ]; then
+    UNTIL=`date -d "${END}" +%Y-%m-%d`
+    COMMIT_COUNT=`git log ${BRANCH} --oneline --no-merges --pretty='%h %cd %d %s' --since="${SINCE} 00:00:00" --until="${UNTIL} 23:59:59" |wc -l`
+    SUM=`expr ${SUM} + ${COMMIT_COUNT}`
+#    echo "${SINCE},${UNTIL},${COMMIT_COUNT}"
+    echo -n ",${COMMIT_COUNT}"
+fi
+echo ",${SUM}"

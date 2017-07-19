@@ -1,0 +1,34 @@
+#!/bin/bash
+
+BRANCH=$1
+START=$2
+END=$3
+INTERVAL=$4
+FILE=$5
+
+INTERVAL_NUM=`echo ${INTERVAL} | sed "s/[m|w|d]//g"`
+INTERVAL_UNIT_SIM=`echo ${INTERVAL} | sed "s/[0-9]*//g"`
+INTERVAL_UNIT="days"
+
+if [ ${INTERVAL_UNIT_SIM} == 'm' ]; then
+    INTERVAL_UNIT="months"
+elif [ ${INTERVAL_UNIT_SIM} == 'w' ]; then
+    INTERVAL_UNIT="weeks"
+fi
+
+START_ADJ=`date -d "${START} ${INTERVAL_NUM} ${INTERVAL_UNIT}" +%Y%m%d`
+
+HEADER="project"
+for (( DATE=${START_ADJ} ; ${DATE} <= ${END}; DATE=`date -d "${DATE} ${INTERVAL_NUM} ${INTERVAL_UNIT}" +%Y%m%d` )) ; do
+    UNTIL=`date -d "${DATE} -1 day" +%Y-%m-%d`
+    HEADER=${HEADER}",${UNTIL}"
+done
+if [ ${DATE} > ${END} ]; then
+    UNTIL=`date -d "${END}" +%Y-%m-%d`
+    HEADER=${HEADER}",${UNTIL}"
+fi
+HEADER=${HEADER}",SUM"
+
+echo "${HEADER}" > ${FILE}
+
+repo forall -p -c "git_cc ${BRANCH} ${START} ${END} ${INTERVAL}" >> ${FILE}
