@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import datetime, sys, os, re, subprocess, io
+from dateutil.relativedelta import relativedelta
 
 
 def main(args):
@@ -53,7 +54,8 @@ def startResearchSpecificProject():
 
 def executeCountingCommit(branch, since, until, interval):
     # Create repo command
-    repo_cmd = ["repo", "forall", "-p", "-c"]
+    # repo_cmd = ["repo", "forall", "-p", "-v", "-c"]
+    repo_cmd = "repo forall -p -v -c "
     # since_opt = "--since=\'%s 00:00:00\' " % since.strftime('%Y-%m-%d')
     # until_opt = "--until=\'%s 23:59:59\'" % until.strftime('%Y-%m-%d')
     # repo_forall_cmd = "git log " +  branch + \
@@ -63,44 +65,70 @@ def executeCountingCommit(branch, since, until, interval):
                       " " + since.strftime('%Y%m%d') + \
                       " " + until.strftime('%Y%m%d') + \
                       " " + interval
-    repo_cmd.append("\"%s\"" % repo_forall_cmd)
+    #repo_cmd.append("\"%s\"" % repo_forall_cmd)
+    # repo_cmd.append(repo_forall_cmd.split())
+    command = (repo_cmd + repo_forall_cmd).split()
+    print(command)
 
     # Parse interval
     regex = re.compile(r'(\d+)(m|w|d)')
-    mo = regex.search(arg)
+    mo = regex.search(interval)
     if mo.group(1) == None or mo.group(2) == None:
         print("Error: Invalid argumnet")
         sys.exit(1)
-    interval = {'value': mo.group(1), 'unit': mo.group(2)}
+    interval = {'value': int(mo.group(1)), 'unit': mo.group(2)}
 
     delta = None
     if interval['unit'] == 'm':
-        delta = datetime.timedelta(months=interval['value'])
+        # delta = datetime.timedelta(months=interval['value'])
+        delta = relativedelta(months=interval['value'])
     elif interval['unit'] == 'w':
         delta = datetime.timedelta(weeks=interval['value'])
     elif interval['unit'] == 'd':
         delta = datetime.timedelta(days=interval['value'])
 
-    print(repo_cmd)
-    # exe = subprocess.run(repo_cmd, stdout=subprocess.PIPE)
-    test_cmd = ["cat", "input2.txt"]
-    exe = subprocess.Popen(test_cmd, stdout=subprocess.PIPE, encoding='utf-8')
+    date = since + delta
+    # print("Project", end='')
+    while date <= until:
+        date_adj = date - datetime.timedelta(days=1)
+        print(",%s" % date_adj.strftime('%Y-%m-%d'), end='')
+        date = date + delta
+
+    if date > until:
+        print(",%s" % until.strftime('%Y-%m-%d'), end='')
+
+    print(",Sum")
+
+    exe = subprocess.Popen(command, stdout=subprocess.PIPE, encoding='utf-8')
+    #test_cmd = ["cat", "android_o_commit_count_research_01_20160801_20170630_1m.txt"]
+    #exe = subprocess.Popen(test_cmd, stdout=subprocess.PIPE, encoding='utf-8')
     project = None
-    for line in exe.stdout:
-        #linestr = str(line)
-        print('org: ' + line, end='')
-        if line.startswith('project '):
-            project = line[len('project '):-1]
-        elif line.startswith(','):
-            outputline = project + line
-            print('mod: ' + outputline, end='')
-            #outputfile.write(outputline)
-        elif line == '' or line == '\n':
-            # Do nothing
-            continue
-        else:
-            print('mod: ' + line, end='')
-            #outputfile.write(outputline)
+    while True:
+        polling = exe.poll()
+        if polling != None:
+            print("Already subprocess is terminated: " + str(polling))
+            break
+        #outs, err = exe.communicate()
+        #if outs == None:
+        #    break
+        #outs_str = outs.decode('utf-8')
+        # for line in exe.stdout:
+        print("!!! PORING !!!")
+        for line in exe.stdout:
+            #linestr = str(line)
+            # print('org: ' + line, end='')
+            if line.startswith('project '):
+                project = line[len('project '):-1]
+            elif line.startswith(','):
+                outputline = project + line
+                print(outputline, end='')
+                #outputfile.write(outputline)
+            elif line == '' or line == '\n':
+                # Do nothing
+                continue
+            else:
+                print(line, end='')
+                #outputfile.write(outputline)
 
 
 def parseArgsForCC(args):
