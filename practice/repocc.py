@@ -4,9 +4,10 @@ import sys
 import re
 import subprocess
 import datetime
-import practice.graph
-import practice.extractdata
+import pygal
+import practice.extractdata as extractdata
 from dateutil.relativedelta import relativedelta
+import numpy
 
 
 def main(args):
@@ -20,8 +21,21 @@ def drawing_graph(output_file_name):
     # Open csv file
     csv_file = open(output_file_name + '.csv', 'r')
 
-    header = csv_file.readline()
-    exe
+    # Get header data
+    header = csv_file.readline().split(',')
+    csv_file.seek(0)
+
+    # Get the data of Sum column
+    pos = {'column': len(header), 'row': None}
+    data = extractdata.extract(csv_file, pos, 'int')
+
+    # Sort the data and get its index
+    sorted_index = numpy.argsort(numpy.array(data))
+
+    graph = pygal.StackedBar()
+    for i in sorted_index[-1:-20:-1]:
+        graph.add()
+
 
 
 def counting_commit(branch, since, until, interval, output_file_name):
