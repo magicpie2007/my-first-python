@@ -23,19 +23,37 @@ def drawing_graph(output_file_name):
 
     # Get header data
     header = csv_file.readline().split(',')
+    column_size = len(header)
     csv_file.seek(0)
 
     # Get the data of Sum column
-    pos = {'column': len(header), 'row': None}
+    pos = {'column': column_size, 'row': None}
     data = extractdata.extract(csv_file, pos, 'int')
 
     # Sort the data and get its index
-    sorted_index = numpy.argsort(numpy.array(data))
+    sorted_index = numpy.argsort(numpy.array(data[1:]))
 
-    graph = pygal.StackedBar()
+    # Define graph type from pygal
+    graph = pygal.HorizontalStackedBar()
+
+    # Set x labels
+    x_labels_data = []
     for i in sorted_index[-1:-20:-1]:
-        graph.add()
+        pos = {'column': 0, 'row': i}
+        cell = extractdata.extract(csv_file, pos, 'str')
+        x_labels_data.append(cell[0])
+    graph.x_labels = tuple(x_labels_data)
 
+    # Add data to graph
+    for i in range(1, column_size):
+        graph_data = []
+        for j in sorted_index[-1:-20:-1]:
+            pos = {'column': i, 'row': j}
+            cell = extractdata.extract(csv_file, pos, 'int')
+            graph_data.append(cell[0])
+        graph.add(header[i], graph_data)
+
+    graph.render_to_file(output_file_name + '.svg')
 
 
 def counting_commit(branch, since, until, interval, output_file_name):
