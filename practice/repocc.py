@@ -29,6 +29,7 @@ def drawing_graph(output_file_name):
     # Get the data of Sum column
     pos = {'column': column_size, 'row': None}
     data = extractdata.extract(csv_file, pos, 'int')
+    csv_file.seek(0)
 
     # Sort the data and get its index
     sorted_index = numpy.argsort(numpy.array(data[1:]))
@@ -38,18 +39,20 @@ def drawing_graph(output_file_name):
 
     # Set x labels
     x_labels_data = []
-    for i in sorted_index[-1:-20:-1]:
-        pos = {'column': 0, 'row': i}
+    for i in sorted_index[-20:]:
+        pos = {'column': 1, 'row': i + 1 + 1}
         cell = extractdata.extract(csv_file, pos, 'str')
+        csv_file.seek(0)
         x_labels_data.append(cell[0])
     graph.x_labels = tuple(x_labels_data)
 
     # Add data to graph
-    for i in range(1, column_size):
+    for i in range(1, column_size - 1):
         graph_data = []
-        for j in sorted_index[-1:-20:-1]:
-            pos = {'column': i, 'row': j}
+        for j in sorted_index[-20:]:
+            pos = {'column': i + 1, 'row': j + 1 + 1}
             cell = extractdata.extract(csv_file, pos, 'int')
+            csv_file.seek(0)
             graph_data.append(cell[0])
         graph.add(header[i], graph_data)
 
@@ -86,7 +89,6 @@ def executing_counting_commit(branch, since, until, interval, output_file):
     while True:
         polling = exe.poll()
         if polling is not None:
-            print("Already subprocess is terminated: " + str(polling))
             break
         for line in exe.stdout:
             if line.startswith('project '):
