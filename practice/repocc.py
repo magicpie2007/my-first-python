@@ -58,6 +58,8 @@ def drawing_graph(output_file_name):
 
     graph.render_to_file(output_file_name + '.svg')
 
+    csv_file.close()
+
 
 def counting_commit(branch, since, until, interval, output_file_name):
     # Open the file to write result
