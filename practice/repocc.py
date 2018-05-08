@@ -11,9 +11,10 @@ import numpy
 
 
 def main(args):
-    branch, since, until, interval = parse_args_for_cc(args)
+    branch, since, until, interval, regex, inverse_regex = parse_args_for_cc(args)
     output_file_name = create_file_name(branch, since, until, interval)
-    counting_commit(branch, since, until, interval, output_file_name)
+    counting_commit(branch, since, until, interval,
+                    regex, inverse_regex, output_file_name)
     drawing_graph(output_file_name)
 
 
@@ -59,7 +60,8 @@ def drawing_graph(output_file_name):
     graph.render_to_file(output_file_name + '.svg')
 
 
-def counting_commit(branch, since, until, interval, output_file_name):
+def counting_commit(branch, since, until, interval,
+                    regex, inverse_regex, output_file_name):
     # Open the file to write result
     output_file = open(output_file_name + ".csv", 'w')
 
@@ -67,21 +69,30 @@ def counting_commit(branch, since, until, interval, output_file_name):
     write_header_for_cc(since, until, interval, output_file)
 
     # Execute counting commit
-    executing_counting_commit(branch, since, until, interval, output_file)
+    executing_counting_commit(branch, since, until, interval,
+                              regex, inverse_regex, output_file)
 
     # Close
     output_file.close()
 
 
-def executing_counting_commit(branch, since, until, interval, output_file):
+def executing_counting_commit(branch, since, until, interval,
+                              regex, inverse_regex, output_file):
 
     # Create repo command
-    repo_cmd = "repo forall -p -v -c "
+    repo_cmd = "repo forall -p -v "
+    if regex is not None:
+        repo_cmd = repo_cmd + "-r " + regex + " "
+    if inverse_regex is not None:
+        repo_cmd = repo_cmd + "-i " + inverse_regex + " "
+    repo_cmd = repo_cmd + "-c "
     repo_forall_cmd = "git_cc " + branch + \
                       " " + since + \
                       " " + until + \
                       " " + interval
     cmd = (repo_cmd + repo_forall_cmd).split()
+
+    print(cmd)
 
     exe = subprocess.Popen(cmd, stdout=subprocess.PIPE, encoding='utf-8')
 
@@ -150,6 +161,8 @@ def parse_args_for_cc(args):
     since = None
     until = None
     interval = None
+    regex_pj = None
+    inverse_regex_pj = None
     for arg in args:
         # Extract option key
         if arg.startswith('-'):
@@ -170,8 +183,14 @@ def parse_args_for_cc(args):
             # until = datetime.datetime.strptime(arg, '%Y%m%d')
             until = arg
             opt = None
-        elif opt == 'i' or opt == 'interval':
+        elif opt == 'p' or opt == 'period':
             interval = arg
+            opt = None
+        elif opt == 'r' or opt == 'regex-pj':
+            regex_pj = arg
+            opt = None
+        elif opt == 'i' or opt == 'inverse-regex-pj':
+            inverse_regex_pj = arg
             opt = None
         else:
             print("Error: Invalid argument")
@@ -179,7 +198,7 @@ def parse_args_for_cc(args):
     if opt is not None:
         print("Error: Invalid argument")
         sys.exit(1)
-    return branch, since, until, interval
+    return branch, since, until, interval, regex_pj, inverse_regex_pj
 
 
 if __name__ == '__main__':
