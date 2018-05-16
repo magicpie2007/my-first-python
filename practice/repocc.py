@@ -229,11 +229,26 @@ def parse_args_for_cc(args):
             opt = None
         else:
             print("Error: Invalid argument")
+            print_usage()
             sys.exit(1)
+
     if opt is not None:
         print("Error: Invalid argument")
+        print_usage()
         sys.exit(1)
+    if branch is None or since is None or until is None\
+            or interval is None:
+        print("Error: Invalid argument")
+        print_usage()
+        sys.exit(1)
+
     return branch, since, until, interval, regex_pj, inverse_regex_pj
+
+
+def print_usage():
+    """Print usage"""
+    print("Usage: repocc -b bransh -s start -u until -p interval"
+          "              -r regex project -i inverse-regex project")
 
 
 if __name__ == '__main__':
