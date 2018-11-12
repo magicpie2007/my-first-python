@@ -91,6 +91,8 @@ def split_line(line):
 def parse_args(args):
     if len(args) < 3:
         print("Error: Invalid Argument")
+        print_usage()
+        exit()
 
     file_path1 = args[0]
     file_path2 = args[1]
@@ -100,6 +102,11 @@ def parse_args(args):
     if len(args) == 4:
         outfile_path = args[3]
     return file_path1, file_path2, key_column, outfile_path
+
+
+def print_usage():
+    """Print usage"""
+    print("Usage: mergelist file1 file2 [key column number] [output file]")
 
 
 if __name__ == '__main__':
